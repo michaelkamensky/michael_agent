@@ -1,2 +1,4 @@
 fastmcp < 3
 ollama
+PyMuPDF
+fpdf2

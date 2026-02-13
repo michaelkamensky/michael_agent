@@ -1,50 +1,61 @@
 #!/usr/bin/python
 import asyncio
-import ollama
+from pathlib import Path
+import subprocess
+import sys
+
 from fastmcp import Client
 
 async def main():
+    source_path = input("Source filename (e.g. He He.txt): ").strip()
+    find_text = input("Find text: ").strip()
+    replace_text = input("Replace text: ").strip()
+    output_pdf_path = input("Output PDF filename (e.g. He He.pdf): ").strip() or "He He.pdf"
+    reference_pdf = (
+        input("Reference PDF filename (default: Michael Engineering Resume.pdf): ")
+        .strip()
+        .strip("'\"")
+        or "Michael Engineering Resume.pdf"
+    )
+
     # 1. Connect to the remote MCP Server
     async with Client("http://localhost:8000/mcp") as mcp_client:
-        
-        # 2. Get available tools from the server
-        tools = await mcp_client.list_tools()
-        
-        # Convert MCP tools to Ollama-compatible tool format
-        ollama_tools = [
-            {
-                'type': 'function',
-                'function': {
-                    'name': t.name,
-                    'description': t.description,
-                    'parameters': t.inputSchema,
-                },
-            } for t in tools
-        ]
+        output_source_path = f"{Path(source_path).stem}_modified.txt"
 
-        for t in tools:
-            print(f"name = {t.name}, description = {t.description}")
-            print(f"parameters = {t.inputSchema}")
+        # 2. Read source text
+        read_result = await mcp_client.call_tool("read_text_source", {"path": source_path})
+        source_text = read_result.data if hasattr(read_result, "data") else read_result
 
-        # 3. Ask Ollama a question that requires the tool
-        user_prompt = "What is 15784 multiplied by 739?"
-        response = ollama.chat(
-            model='gpt-oss:120b', # Ensure this model supports tool calling
-            messages=[{'role': 'user', 'content': user_prompt}],
-            tools=ollama_tools,
+        # 3. Replace text
+        updated_text = source_text.replace(find_text, replace_text)
+
+        # 4. Write updated source
+        write_result = await mcp_client.call_tool(
+            "write_text_source",
+            {"path": output_source_path, "text": updated_text},
         )
+        print(f"Server result: {write_result}")
 
-        # 4. Handle the Tool Call (if Ollama decides to use one)
-        if response.get('message', {}).get('tool_calls'):
-            for call in response['message']['tool_calls']:
-                tool_name = call['function']['name']
-                arguments = call['function']['arguments']
-                
-                print(f"Agent is calling remote tool: {tool_name} with {arguments}")
-                
-                # Execute the tool on the remote MCP Server
-                result = await mcp_client.call_tool(tool_name, arguments)
-                print(f"Server result: {result}")
+        # 5. Render PDF using reference layout
+        script_path = Path("/home/mike/projects/michael_agent/format_from_reference.py")
+        result = subprocess.run(
+            [sys.executable, str(script_path)],
+            input=f"{output_source_path}\n{output_pdf_path}\n{reference_pdf}\n",
+            text=True,
+            capture_output=True,
+        )
+        if result.returncode != 0:
+            raise RuntimeError(result.stderr.strip() or result.stdout.strip())
+        if result.stdout.strip():
+            print(result.stdout.strip())
+
+        # 6. Delete modified source after rendering
+        output_text_path = Path("/home/mike/projects/michael_agent/sources") / output_source_path
+        try:
+            output_text_path.unlink()
+            print(f"Deleted temporary source: {output_text_path}")
+        except FileNotFoundError:
+            print(f"Temporary source not found: {output_text_path}")
 
 if __name__ == "__main__":
     asyncio.run(main())
