@@ -7,6 +7,8 @@ import fitz  # PyMuPDF
 from fastmcp import FastMCP
 from fpdf import FPDF
 
+from webscrapper.scraper import fetch_page_text
+
 mcp = FastMCP("MathServer")
 PDF_ROOT = Path("/home/mike/projects/michael_agent/pdfs").resolve()
 TEXT_ROOT = Path("/home/mike/projects/michael_agent/sources").resolve()
@@ -191,6 +193,13 @@ def replace_text_in_pdf(
     doc.save(str(out_path))
     doc.close()
     return f"Replaced {total_replaced} occurrence(s) in {out_path}"
+
+
+@mcp.tool()
+def scrape_url_text(url: str) -> dict:
+    """Fetch a URL and return extracted text in a JSON-compatible dict."""
+    return fetch_page_text(url)
+
 
 if __name__ == "__main__":
     # Start the server on a specific port using HTTP transport
