@@ -2,6 +2,7 @@
 
 from pathlib import Path
 from typing import Optional
+from urllib.request import Request, urlopen
 
 import fitz  # PyMuPDF
 from fastmcp import FastMCP
@@ -199,6 +200,81 @@ def replace_text_in_pdf(
 def scrape_url_text(url: str) -> dict:
     """Fetch a URL and return extracted text in a JSON-compatible dict."""
     return fetch_page_text(url)
+
+
+@mcp.tool()
+def fetch_html(url: str, user_agent: str = "Mozilla/5.0") -> dict:
+    """Fetch raw HTML for a URL."""
+    req = Request(url, headers={"User-Agent": user_agent})
+    with urlopen(req) as resp:
+        html = resp.read().decode("utf-8", errors="replace")
+        return {"url": url, "status": getattr(resp, "status", None), "html": html}
+
+
+def _require_playwright():
+    try:
+        from playwright.sync_api import sync_playwright  # type: ignore
+    except Exception as exc:
+        raise RuntimeError(
+            "Playwright is required for this tool. Install with: pip install playwright && playwright install"
+        ) from exc
+    return sync_playwright
+
+
+@mcp.tool()
+def fetch_dom_text(url: str, wait_for: Optional[str] = None, timeout_ms: int = 30000) -> dict:
+    """Fetch rendered DOM HTML and visible text using a headless browser."""
+    sync_playwright = _require_playwright()
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page()
+        page.goto(url, wait_until="domcontentloaded", timeout=timeout_ms)
+        if wait_for:
+            page.wait_for_selector(wait_for, timeout=timeout_ms)
+        html = page.content()
+        text = page.inner_text("body")
+        browser.close()
+    return {"url": url, "html": html, "text": text}
+
+
+@mcp.tool()
+def fetch_accessibility_tree(url: str, wait_for: Optional[str] = None, timeout_ms: int = 30000) -> dict:
+    """Fetch the accessibility tree snapshot for a page."""
+    sync_playwright = _require_playwright()
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page()
+        page.goto(url, wait_until="domcontentloaded", timeout=timeout_ms)
+        if wait_for:
+            page.wait_for_selector(wait_for, timeout=timeout_ms)
+        snapshot = page.accessibility.snapshot()
+        browser.close()
+    return {"url": url, "accessibility_tree": snapshot}
+
+
+@mcp.tool()
+def click_and_extract(
+    url: str,
+    selector: str,
+    wait_for: Optional[str] = None,
+    timeout_ms: int = 30000,
+    wait_after_ms: int = 500,
+) -> dict:
+    """Click a selector and return updated DOM HTML and visible text."""
+    sync_playwright = _require_playwright()
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        page = browser.new_page()
+        page.goto(url, wait_until="domcontentloaded", timeout=timeout_ms)
+        if wait_for:
+            page.wait_for_selector(wait_for, timeout=timeout_ms)
+        page.click(selector, timeout=timeout_ms)
+        if wait_after_ms:
+            page.wait_for_timeout(wait_after_ms)
+        html = page.content()
+        text = page.inner_text("body")
+        browser.close()
+    return {"url": url, "selector": selector, "html": html, "text": text}
 
 
 if __name__ == "__main__":
