@@ -211,49 +211,56 @@ def fetch_html(url: str, user_agent: str = "Mozilla/5.0") -> dict:
         return {"url": url, "status": getattr(resp, "status", None), "html": html}
 
 
-def _require_playwright():
+def _require_playwright_async():
     try:
-        from playwright.sync_api import sync_playwright  # type: ignore
+        from playwright.async_api import async_playwright  # type: ignore
     except Exception as exc:
         raise RuntimeError(
             "Playwright is required for this tool. Install with: pip install playwright && playwright install"
         ) from exc
-    return sync_playwright
+    return async_playwright
 
 
 @mcp.tool()
-def fetch_dom_text(url: str, wait_for: Optional[str] = None, timeout_ms: int = 30000) -> dict:
+async def fetch_dom_text(
+    url: str,
+    wait_for: Optional[str] = None,
+    timeout_ms: int = 30000,
+    wait_after_ms: int = 0,
+) -> dict:
     """Fetch rendered DOM HTML and visible text using a headless browser."""
-    sync_playwright = _require_playwright()
-    with sync_playwright() as p:
-        browser = p.chromium.launch()
-        page = browser.new_page()
-        page.goto(url, wait_until="domcontentloaded", timeout=timeout_ms)
+    async_playwright = _require_playwright_async()
+    async with async_playwright() as p:
+        browser = await p.chromium.launch()
+        page = await browser.new_page()
+        await page.goto(url, wait_until="domcontentloaded", timeout=timeout_ms)
         if wait_for:
-            page.wait_for_selector(wait_for, timeout=timeout_ms)
-        html = page.content()
-        text = page.inner_text("body")
-        browser.close()
+            await page.wait_for_selector(wait_for, timeout=timeout_ms)
+        if wait_after_ms:
+            await page.wait_for_timeout(wait_after_ms)
+        html = await page.content()
+        text = await page.inner_text("body")
+        await browser.close()
     return {"url": url, "html": html, "text": text}
 
 
 @mcp.tool()
-def fetch_accessibility_tree(url: str, wait_for: Optional[str] = None, timeout_ms: int = 30000) -> dict:
+async def fetch_accessibility_tree(url: str, wait_for: Optional[str] = None, timeout_ms: int = 30000) -> dict:
     """Fetch the accessibility tree snapshot for a page."""
-    sync_playwright = _require_playwright()
-    with sync_playwright() as p:
-        browser = p.chromium.launch()
-        page = browser.new_page()
-        page.goto(url, wait_until="domcontentloaded", timeout=timeout_ms)
+    async_playwright = _require_playwright_async()
+    async with async_playwright() as p:
+        browser = await p.chromium.launch()
+        page = await browser.new_page()
+        await page.goto(url, wait_until="domcontentloaded", timeout=timeout_ms)
         if wait_for:
-            page.wait_for_selector(wait_for, timeout=timeout_ms)
-        snapshot = page.accessibility.snapshot()
-        browser.close()
+            await page.wait_for_selector(wait_for, timeout=timeout_ms)
+        snapshot = await page.accessibility.snapshot()
+        await browser.close()
     return {"url": url, "accessibility_tree": snapshot}
 
 
 @mcp.tool()
-def click_and_extract(
+async def click_and_extract(
     url: str,
     selector: str,
     wait_for: Optional[str] = None,
@@ -261,19 +268,19 @@ def click_and_extract(
     wait_after_ms: int = 500,
 ) -> dict:
     """Click a selector and return updated DOM HTML and visible text."""
-    sync_playwright = _require_playwright()
-    with sync_playwright() as p:
-        browser = p.chromium.launch()
-        page = browser.new_page()
-        page.goto(url, wait_until="domcontentloaded", timeout=timeout_ms)
+    async_playwright = _require_playwright_async()
+    async with async_playwright() as p:
+        browser = await p.chromium.launch()
+        page = await browser.new_page()
+        await page.goto(url, wait_until="domcontentloaded", timeout=timeout_ms)
         if wait_for:
-            page.wait_for_selector(wait_for, timeout=timeout_ms)
-        page.click(selector, timeout=timeout_ms)
+            await page.wait_for_selector(wait_for, timeout=timeout_ms)
+        await page.click(selector, timeout=timeout_ms)
         if wait_after_ms:
-            page.wait_for_timeout(wait_after_ms)
-        html = page.content()
-        text = page.inner_text("body")
-        browser.close()
+            await page.wait_for_timeout(wait_after_ms)
+        html = await page.content()
+        text = await page.inner_text("body")
+        await browser.close()
     return {"url": url, "selector": selector, "html": html, "text": text}
 
 

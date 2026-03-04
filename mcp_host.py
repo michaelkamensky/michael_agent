@@ -9,8 +9,7 @@ from fastmcp import Client
 
 async def main():
     source_path = input("Source filename (e.g. He He.txt): ").strip()
-    find_text = input("Find text: ").strip()
-    replace_text = input("Replace text: ").strip()
+    target_url = input("Target URL to analyze: ").strip()
     output_pdf_path = input("Output PDF filename (e.g. He He.pdf): ").strip() or "He He.pdf"
     reference_pdf = (
         input("Reference PDF filename (default: Michael Engineering Resume.pdf): ")
@@ -47,9 +46,21 @@ async def main():
 
         # 3. Ask the LLM to perform the substitution using MCP tools
         user_prompt = (
-            "Use the MCP tools to read the source text, replace all occurrences of "
-            f"'{find_text}' with '{replace_text}', and write the result to the "
-            f"output file named '{output_source_path}'. The input file is '{source_path}'. "
+            "You are an assistant that must use MCP tools to complete the task.\n"
+            "Goal: Update the resume text to better match the vocabulary, keywords, and requirements "
+            "from the job description at the target URL.\n\n"
+            "Steps:\n"
+            "1) Use `fetch_html` or `fetch_dom_text` to gather the job description text from the URL.\n"
+            "2) Use `read_text_source` to read the resume text from the input file.\n"
+            "3) Use `read_text_source` to read the experience file at './experience/experience.txt' "
+            "and use it as the source of truth for relevant experience details.\n"
+            "4) Update the resume to incorporate relevant keywords and phrases from the job description, "
+            "without fabricating experience. Keep tone professional and concise.\n"
+            "5) Write the updated resume to the output file using `write_text_source`.\n\n"
+            f"Target URL: {target_url}\n"
+            f"Input file: {source_path}\n"
+            "Experience file: ./experience/experience.txt\n"
+            f"Output file: {output_source_path}\n\n"
             "When you have completed the task, reply with the single word 'done'."
         )
         messages = [{"role": "user", "content": user_prompt}]
