@@ -1,0 +1,128 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\usepackage{enumitem}
+
+\setlength{\parindent}{0pt}
+
+\begin{document}
+
+\begin{center}
+{\Large \textbf{Michael Kamensky}} \\
+\vspace{4pt}
+michaelkamensky03@gmail.com \\
+\href{https://github.com/michaelkamensky}{github.com/michaelkamensky} \\
+\href{https://linkedin.com/in/michael-kamensky-96a210285}{linkedin.com/in/michael-kamensky-96a210285}
+\end{center}
+
+\vspace{10pt}
+
+\textbf{\large Education}
+
+\vspace{4pt}
+
+\textbf{B.S. Computer Engineering} \\
+University of California, Santa Cruz \hfill GPA: 3.60
+
+\vspace{4pt}
+
+\textbf{Relevant Coursework}
+
+Advanced Multivariate Calculus, Linear Algebra, Computer Architecture, Data Structures and Algorithms, Programming Abstractions: Python, Computer Systems, Discrete Mathematics, Parallelism and Concurrency, Advanced Programming, Computer Networks, Network Security, Circuit Analysis
+
+\vspace{10pt}
+
+\textbf{\large Experience}
+
+\vspace{6pt}
+
+\textbf{MarchUp Internship} (3 months)
+
+Contributed to efforts to horizontally scale a social media service at MarchUp by re-architecting a web-server-hosted search engine deployed on a monolithic PHP/Apache stack. Designed and evaluated multiple AWS-based distributed prototypes, including a real-time indexing architecture that improved search freshness and scalability.
+
+Reference: Harsh Parandekar (Manager) \\
+Email: harsh@marchup.net \\
+Phone: 408-230-9028
+
+\vspace{6pt}
+
+\textbf{Dymium Internship} (8 months)
+
+Implemented a scalable Kubernetes architecture for a stateful reverse tunneling proxy using a custom DNS-based load-balancing protocol, enabling horizontal scaling of previously single-instance servers.
+
+Reference: Igor Plotnikov (Manager) \\
+Email: igor@dymium.io \\
+Phone: 408-702-7865
+
+\vspace{6pt}
+
+\textbf{QUIC Research --- University of California, Santa Cruz} (6 months)
+
+Conducted research under Professor Ram Sundara Raman in network systems and security, developing a QUIC protocol fuzzer to evaluate firewall behavior. Designed packet mutation strategies to identify evasion and non-evasion cases, systematically documenting results, and co-authored a paper analyzing fuzzing results on open-source firewalls.
+
+Reference: Ram Sundara Raman (Professor) \\
+Email: rsundar2@ucsc.edu
+
+\vspace{10pt}
+
+\textbf{\large Projects}
+
+\vspace{6pt}
+
+\textbf{QUIC Fuzzer}
+
+\href{https://github.com/michaelkamensky/mutate_quic_public}{github.com/michaelkamensky/mutate\_quic\_public}
+
+A network security fuzzing framework designed to evaluate firewall behavior on QUIC traffic. The system generates and captures valid QUIC packets, applies protocol-aware mutation strategies, and replays modified traffic against firewall-protected targets, recording and analyzing evasion and non-evasion outcomes.
+
+Research paper: \\
+\href{https://github.com/michaelkamensky/Fuzzing-Firewalls-with-QUIC/blob/main/cse195_senior_thesis.pdf}{Senior Thesis}
+
+\vspace{6pt}
+
+\textbf{Custom DNS Server}
+
+A scalable reverse tunneling system built on Kubernetes that replaces single-instance proxies with a horizontally scalable design. The architecture employs a custom DNS server deployed as a Kubernetes Service and propagated to workloads via ConfigMaps, enabling dynamic traffic routing to active tunneling proxies through a DNS-based load-balancing protocol using zero-TTL records and proxy-reported state via API calls.
+
+\vspace{10pt}
+
+\textbf{\large Skills}
+
+\vspace{4pt}
+
+\textbf{Primary Focus (Production \& Research Experience)}
+
+\begin{itemize}[leftmargin=*]
+\item C (4+ years) --- systems programming, networking, embedded systems
+\item Python (6+ years) --- scripting, analysis, tooling
+\item Go (1+ year) --- distributed systems, networking tools
+\end{itemize}
+
+\textbf{Networking \& Security}
+
+\begin{itemize}[leftmargin=*]
+\item QUIC protocol analysis (6 months)
+\item Protocol fuzzing and firewall evaluation (6 months)
+\item Network security and encrypted transport analysis (coursework + research)
+\end{itemize}
+
+\textbf{Distributed Systems \& Infrastructure}
+
+\begin{itemize}[leftmargin=*]
+\item Kubernetes (8 months) --- stateful services, DNS-based routing, scaling
+\item AWS (3 months) --- distributed prototypes, backend services
+\item DNS-based load balancing (project experience)
+\end{itemize}
+
+\textbf{Additional Languages \& Technologies}
+
+\begin{itemize}[leftmargin=*]
+\item Java (coursework + projects)
+\item C++ (coursework)
+\item RISC-V Assembly (coursework + labs)
+\item PHP (project experience)
+\item HTML/CSS/JavaScript (supporting knowledge)
+\end{itemize}
+
+\end{document}

@@ -1,6 +1,9 @@
 #!/usr/bin/python
 
 from pathlib import Path
+import shutil
+import subprocess
+import tempfile
 from typing import Optional
 from urllib.request import Request, urlopen
 
@@ -108,6 +111,52 @@ def render_pdf_from_text(
         pdf.multi_cell(0, line_height, line)
     pdf.output(str(out_path))
     return f"Rendered PDF to {out_path}"
+
+
+@mcp.tool()
+def render_pdf_from_latex(
+    path: str,
+    output_path: Optional[str] = None,
+) -> str:
+    """Render a PDF from a LaTeX source file."""
+    tex_path = _resolve_text_path(path)
+    if not tex_path.is_file():
+        raise FileNotFoundError(f"LaTeX source not found: {tex_path}")
+
+    pdflatex = shutil.which("pdflatex")
+    if not pdflatex:
+        raise RuntimeError("pdflatex is required to render LaTeX. Install a TeX distribution (e.g., TeX Live).")
+
+    out_path = _resolve_pdf_path(output_path) if output_path else _resolve_pdf_path(tex_path.with_suffix(".pdf").name)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cmd = [
+            pdflatex,
+            "-interaction=nonstopmode",
+            "-halt-on-error",
+            f"-output-directory={tmpdir}",
+            tex_path.name,
+        ]
+        result = subprocess.run(
+            cmd,
+            cwd=str(tex_path.parent),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            log = result.stdout.strip()
+            raise RuntimeError(f"LaTeX render failed with exit code {result.returncode}.\n{log}")
+
+        tmp_pdf = Path(tmpdir) / tex_path.with_suffix(".pdf").name
+        if not tmp_pdf.is_file():
+            raise RuntimeError("LaTeX render completed, but PDF output was not found.")
+
+        shutil.copy2(tmp_pdf, out_path)
+
+    return f"Rendered LaTeX PDF to {out_path}"
 
 
 @mcp.tool()
