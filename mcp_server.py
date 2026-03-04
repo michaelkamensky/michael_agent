@@ -4,6 +4,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+import re
 from typing import Optional
 from urllib.request import Request, urlopen
 
@@ -30,6 +31,23 @@ def _resolve_text_path(path: str) -> Path:
     if TEXT_ROOT not in text_path.parents and text_path != TEXT_ROOT:
         raise ValueError(f"Path must be under {TEXT_ROOT}")
     return text_path
+
+
+def _sanitize_dir_name(name: str) -> str:
+    cleaned = re.sub(r"[^\w\s.-]", "", name.strip())
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    return cleaned or "company"
+
+
+@mcp.tool()
+def create_company_pdf_dir(company_name: str) -> str:
+    """Create (or reuse) a company-named directory under the PDF root."""
+    if not company_name or not company_name.strip():
+        raise ValueError("company_name must be non-empty.")
+    safe_name = _sanitize_dir_name(company_name)
+    dir_path = _resolve_pdf_path(safe_name)
+    dir_path.mkdir(parents=True, exist_ok=True)
+    return f"PDF directory ready: {dir_path}"
 
 @mcp.tool()
 def multiply_numbers(a: int, b: int) -> int:
